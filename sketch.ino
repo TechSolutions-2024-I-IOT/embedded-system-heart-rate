@@ -3,7 +3,6 @@
 #include <ThingSpeak.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
-#include "time.h"
 #include "PulseSimulator.h"
 
 // Pin Definitions
@@ -15,6 +14,9 @@
 #define WIFI_PASSWORD ""
 #define MY_CHANNEL 2566527 
 #define API_KEY "EOVRV2RJBUZBX6TU"
+
+// EdgeBackend
+#define EDGE_BACKEND_URL "https://taskedgelayerservice.azurewebsites.net/api/v1/sensor-data"
 
 // HTTP Client
 HTTPClient client_http;
@@ -39,6 +41,7 @@ void setup() {
     Serial.println("Hello, ESP32!");
     connectWifi();
     ThingSpeak.begin(client_wifi); // Connecting with ThingSpeak
+    connectEdgeBackend(); // Método POST para enviar datos del sensor
     pulseSimulator.begin(PULSE_PIN); // Initialize Pulse Simulator
 }
 
@@ -52,11 +55,24 @@ void loop() {
 
     Serial.print("\nHeart Rate: ");
     Serial.print(heartRate);
+    testSendBackend(heartRate);
+    
+    // client_http.end(); // Liberar los recursos
 
-    sendThingSpeak(heartRate);
+    //sendThingSpeak(heartRate);
     controlLed(heartRate);
     
     delay(500);
+}
+
+void testSendBackend(int heartRate){    
+  String jsonData = "{\"pulse\":\"" + String(heartRate) + "\"}";
+  int httpCode2 = client_http.POST(jsonData); 
+}
+
+void connectEdgeBackend(){
+  client_http.begin(EDGE_BACKEND_URL); // Especificar el URL
+  client_http.addHeader("Content-Type", "application/json"); // Añadir cabecera para JSON
 }
 
 void connectWifi() {
