@@ -4,6 +4,7 @@
 #include <HTTPClient.h>
 #include <WiFi.h>
 #include "PulseSimulator.h"
+#include "WiFiBackendManager.h"
 #include "config.h"
 
 // HTTP Client
@@ -11,6 +12,8 @@ HTTPClient client_http;
 
 // WiFi Client
 WiFiClient client_wifi;
+
+WiFiBackendManager wifiManager;
 
 // Pulse Simulator
 PulseSimulator pulseSimulator;
@@ -23,14 +26,14 @@ void controlLed(int heartRate);
 void connectEdgeBackend();
 void sendToBackend(int heartRate);
 
+
 void setup() {
     Wire.begin(SDA_PIN, SCL_PIN);
     Serial.begin(115200);
     pinMode(LED_PIN, OUTPUT);
     Serial.println("Hello, ESP32!");
-    connectWifi();
+    wifiManager.connectWifi();
     ThingSpeak.begin(client_wifi);
-    connectEdgeBackend();
     pulseSimulator.begin(PULSE_PIN);
 }
 
@@ -41,7 +44,7 @@ void loop() {
     Serial.print("\nHeart Rate: ");
     Serial.println(heartRate);
     
-    sendToBackend(heartRate);
+    wifiManager.sendHeartRateData(heartRate);
     //sendThingSpeak(heartRate);
     controlLed(heartRate);
     
