@@ -4,19 +4,7 @@
 #include <HTTPClient.h>
 #include <WiFi.h>
 #include "PulseSimulator.h"
-
-// Pin Definitions
-#define PULSE_PIN 35
-#define LED_PIN 13
-
-// ThingSpeak Channel Credentials
-#define WIFI_SSID "Wokwi-GUEST" 
-#define WIFI_PASSWORD ""
-#define MY_CHANNEL 2566527 
-#define API_KEY "EOVRV2RJBUZBX6TU"
-
-// EdgeBackend
-#define EDGE_BACKEND_URL "https://taskedgelayerservice.azurewebsites.net/api/v1/sensor-data"
+#include "config.h"
 
 // HTTP Client
 HTTPClient client_http;
@@ -30,49 +18,34 @@ PulseSimulator pulseSimulator;
 // Function Prototypes
 void connectWifi();
 void sendThingSpeak(int heartRate);
-int readPulse();
 int calculateHeartRate(float voltage);
 void controlLed(int heartRate);
+void connectEdgeBackend();
+void sendToBackend(int heartRate);
 
 void setup() {
-    Wire.begin(23, 22);
+    Wire.begin(SDA_PIN, SCL_PIN);
     Serial.begin(115200);
     pinMode(LED_PIN, OUTPUT);
     Serial.println("Hello, ESP32!");
     connectWifi();
-    ThingSpeak.begin(client_wifi); // Connecting with ThingSpeak
-    connectEdgeBackend(); // Método POST para enviar datos del sensor
-    pulseSimulator.begin(PULSE_PIN); // Initialize Pulse Simulator
+    ThingSpeak.begin(client_wifi);
+    connectEdgeBackend();
+    pulseSimulator.begin(PULSE_PIN);
 }
 
 void loop() {
-    // int16_t pulseValue = readPulse();
-    // float voltage = pulseValue * (5.0 / 4095.0);
-    // int heartRate = calculateHeartRate(voltage);
-    
     float voltage = pulseSimulator.readVoltage();
     int heartRate = calculateHeartRate(voltage);
 
     Serial.print("\nHeart Rate: ");
-    Serial.print(heartRate);
-    testSendBackend(heartRate);
+    Serial.println(heartRate);
     
-    // client_http.end(); // Liberar los recursos
-
+    sendToBackend(heartRate);
     //sendThingSpeak(heartRate);
     controlLed(heartRate);
     
     delay(500);
-}
-
-void testSendBackend(int heartRate){    
-  String jsonData = "{\"pulse\":\"" + String(heartRate) + "\"}";
-  int httpCode2 = client_http.POST(jsonData); 
-}
-
-void connectEdgeBackend(){
-  client_http.begin(EDGE_BACKEND_URL); // Especificar el URL
-  client_http.addHeader("Content-Type", "application/json"); // Añadir cabecera para JSON
 }
 
 void connectWifi() {
@@ -95,19 +68,30 @@ void sendThingSpeak(int heartRate) {
     }
 }
 
-int readPulse() {
-    return analogRead(PULSE_PIN);
-}
-
 int calculateHeartRate(float voltage) {
     return (voltage / 3.3) * 675;
 }
 
 void controlLed(int heartRate) {
-    if (heartRate < 60 || heartRate > 140) {
+    if (heartRate < MIN_HEART_RATE || heartRate > MAX_HEART_RATE) {
         digitalWrite(LED_PIN, HIGH);
         // Here send the notification to the backend
     } else {
         digitalWrite(LED_PIN, LOW);
+    }
+}
+
+void connectEdgeBackend() {
+    client_http.begin(EDGE_BACKEND_URL);
+    client_http.addHeader("Content-Type", "application/json");
+}
+
+void sendToBackend(int heartRate) {
+    String jsonData = "{\"pulse\":\"" + String(heartRate) + "\"}";
+    int httpCode = client_http.POST(jsonData);
+    if (httpCode > 0) {
+        Serial.printf("HTTP Response code: %d\n", httpCode);
+    } else {
+        Serial.printf("HTTP Request failed: %s\n", client_http.errorToString(httpCode).c_str());
     }
 }

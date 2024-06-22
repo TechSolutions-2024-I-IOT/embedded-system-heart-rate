@@ -13,7 +13,7 @@ float PulseSimulator::readVoltage() {
         simulatePulse();
     } else {
         int16_t pulseValue = analogRead(_pin);
-        _voltage = pulseValue * (5.0 / 4095.0);
+        _voltage = pulseValue * (VOLTAGE_MAX / ADC_MAX);
     }
     return _voltage;
 }
@@ -24,8 +24,7 @@ void PulseSimulator::enableSimulation(bool enable) {
 
 void PulseSimulator::simulatePulse() {
     unsigned long currentTime = millis();
-    if (currentTime - _lastUpdateTime >= 500) { // Update every 500ms
-        // Generate a random voltage
+    if (currentTime - _lastUpdateTime >= SIMULATION_UPDATE_INTERVAL) {
         _voltage = 0.3 + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (1.0 - 0.9)));
         _lastUpdateTime = currentTime;
     }

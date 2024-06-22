@@ -2,6 +2,7 @@
 #define PULSE_SIMULATOR_H
 
 #include <Arduino.h>
+#include "config.h"
 
 class PulseSimulator {
 public:
