@@ -3,7 +3,6 @@
 
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include "config.h"
 
 class WiFiBackendManager {
   private:

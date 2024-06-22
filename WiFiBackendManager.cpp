@@ -1,5 +1,6 @@
 #include "WiFiBackendManager.h"
 #include "HeartRateLog.h"
+#include "config.h"
 
 WiFiBackendManager::WiFiBackendManager()
   : ssid(WIFI_SSID), password(WIFI_PASSWORD), backendUrl(EDGE_BACKEND_URL), smartBandId(SMART_BAND_ID) {}
