@@ -16,6 +16,9 @@
 #define PULSE_PIN 35
 #define LED_PIN 13
 
+// Smartband
+#define SMART_BAND_ID 1
+
 // I2C pins
 #define SDA_PIN 23
 #define SCL_PIN 22

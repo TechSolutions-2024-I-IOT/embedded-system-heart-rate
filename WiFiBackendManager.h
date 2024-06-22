@@ -11,12 +11,14 @@ class WiFiBackendManager {
     const char* ssid;
     const char* password;
     const char* backendUrl;
+    int smartBandId;
 
   public:
     WiFiBackendManager();
     void connectWifi();
     void sendHeartRateData(int heartRate);
     bool isConnected();
+    void setSmartBandId(int id);
 };
 
 #endif

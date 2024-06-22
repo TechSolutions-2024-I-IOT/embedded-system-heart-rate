@@ -1,8 +1,8 @@
 #include "WiFiBackendManager.h"
-#include <Arduino.h>
+#include "HeartRateLog.h"
 
 WiFiBackendManager::WiFiBackendManager()
-  : ssid(WIFI_SSID), password(WIFI_PASSWORD), backendUrl(EDGE_BACKEND_URL) {}
+  : ssid(WIFI_SSID), password(WIFI_PASSWORD), backendUrl(EDGE_BACKEND_URL), smartBandId(SMART_BAND_ID) {}
 
 void WiFiBackendManager::connectWifi() {
   WiFi.mode(WIFI_STA);
@@ -17,28 +17,37 @@ void WiFiBackendManager::connectWifi() {
   Serial.println(WiFi.localIP());
 }
 
+void WiFiBackendManager::setSmartBandId(int id) {
+    smartBandId = id;
+}
+
 void WiFiBackendManager::sendHeartRateData(int heartRate) {
-  if (!isConnected()) {
-    Serial.println("WiFi not connected. Reconnecting...");
-    connectWifi();
-  }
+    if (!isConnected()) {
+        Serial.println("WiFi not connected. Reconnecting...");
+        connectWifi();
+    }
 
-  String jsonData = "{\"pulse\":\"" + String(heartRate) + "\"}";
+    HeartRateLog* heartRateLog = HeartRateLog::getInstance();
+    heartRateLog->setHeartRate(heartRate);
+    heartRateLog->setSmartBandId(smartBandId);
 
-  client_http.begin(backendUrl);
-  client_http.addHeader("Content-Type", "application/json");
+    String jsonData = "{\"smart_band_id\":" + String(heartRateLog->getSmartBandId()) + 
+                      ",\"pulse\":" + String(heartRateLog->getHeartRate()) + "}";
 
-  int httpCode = client_http.POST(jsonData);
+    client_http.begin(backendUrl);
+    client_http.addHeader("Content-Type", "application/json");
 
-  if (httpCode > 0) {
-    String payload = client_http.getString();
-    Serial.println("\nStatus code: " + String(httpCode));
-    Serial.println("Payload: " + payload);
-  } else {
-    Serial.println("Error sending data to backend");
-  }
+    int httpCode = client_http.POST(jsonData);
 
-  client_http.end();
+    if (httpCode > 0) {
+        String payload = client_http.getString();
+        Serial.println("\nStatus code: " + String(httpCode));
+        Serial.println("Payload: " + payload);
+    } else {
+        Serial.println("Error sending data to backend");
+    }
+
+    client_http.end();
 }
 
 bool WiFiBackendManager::isConnected() {

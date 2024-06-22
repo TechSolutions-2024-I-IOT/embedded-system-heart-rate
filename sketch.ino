@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include "PulseSimulator.h"
 #include "WiFiBackendManager.h"
+#include "HeartRateLog.h"
 #include "config.h"
 
 // HTTP Client
@@ -33,6 +34,7 @@ void setup() {
     pinMode(LED_PIN, OUTPUT);
     Serial.println("Hello, ESP32!");
     wifiManager.connectWifi();
+    wifiManager.setSmartBandId(SMART_BAND_ID);
     ThingSpeak.begin(client_wifi);
     pulseSimulator.begin(PULSE_PIN);
 }
